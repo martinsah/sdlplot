@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include "sdlplot.h"
 #include <iostream>
 
@@ -35,6 +35,14 @@ int sdlplot::makewindow()
     SDL_RenderSetLogicalSize(renderer,virt_xmax,virt_ymax);
 
     redraw_timer_id = SDL_AddTimer(redraw_delay_time, sdl_timer_callback, USEREVENT_TIMER_TRIGGER);
+	return 0;
+
+	float dd, hd, vd;
+
+	for (int d = SDL_GetNumVideoDisplays(); d > 0; d--) {
+		SDL_GetDisplayDPI(d, &dd, &hd, &vd);
+		cout << "\ndisplay index[" << d << "] ddpi=" << dd << " hdpi=" << hd << " vdpi=" << vd;
+	}
 }
 
 void sdlplot::drawaxis()
@@ -44,7 +52,88 @@ void sdlplot::drawaxis()
     SDL_RenderDrawLine(renderer, xscale(axis.xmax), axis.ypadding, xscale(axis.xmax), yscale(axis.ymax));
     SDL_RenderDrawLine(renderer, xscale(axis.xmax), yscale(axis.ymax), axis.xpadding, yscale(axis.ymax));
     SDL_RenderDrawLine(renderer, axis.xpadding, yscale(axis.ymax), axis.xpadding, axis.ypadding);
-    cout << "\nxmax: " << xscale(axis.xmax);
+
+	// draw y axis lines (horizontal lines)
+	std::vector<double> maj_vec_y;
+
+	for (double y = 0; y <= axis.ymax; y += axis.ytick_maj) {
+		maj_vec_y.push_back(y);
+	}
+	for (double y = 0; y >= axis.ymin; y -= axis.ytick_maj) {
+		maj_vec_y.push_back(y);
+	}
+
+	for(auto y: maj_vec_y){
+		SDL_SetRenderDrawColor(renderer, axis.color_major_ticks.r, axis.color_major_ticks.g, axis.color_major_ticks.b, SDL_ALPHA_OPAQUE);
+		SDL_RenderDrawLine(renderer, axis.xpadding + axis.major_tick_xmin, yscale(y), axis.xpadding + axis.major_tick_xmax, yscale(y));
+
+		if (axis.draw_major_tick_lines) {
+			if (axis.major_linestyle == linestyle::dotted) {
+				SDL_SetRenderDrawColor(renderer, axis.color.r, axis.color.g, axis.color.b, SDL_ALPHA_OPAQUE);
+				for (int x = axis.xpadding; x < xscale(axis.xmax) - axis.dotted_line_period; x += axis.dotted_line_period) {
+					SDL_RenderDrawLine(renderer, x, yscale(y), x + axis.dotted_line_period / 2, yscale(y));
+				}
+			}
+			else {
+				SDL_SetRenderDrawColor(renderer, axis.color.r, axis.color.g, axis.color.b, SDL_ALPHA_OPAQUE);
+				SDL_RenderDrawLine(renderer, axis.xpadding + axis.major_tick_xmin, yscale(y), xscale(axis.xmax), yscale(y));
+			}
+		}
+	}
+
+	std::vector<double> min_vec_y;
+	for (double y = 0; y <= axis.ymax; y += axis.ytick_min) {
+		min_vec_y.push_back(y);
+	}
+	for (double y = 0; y >= axis.ymin; y -= axis.ytick_min) {
+		min_vec_y.push_back(y);
+	}
+
+	for (auto y: min_vec_y) {
+		SDL_SetRenderDrawColor(renderer, axis.color_minor_ticks.r, axis.color_minor_ticks.g, axis.color_minor_ticks.b, SDL_ALPHA_OPAQUE);
+		SDL_RenderDrawLine(renderer, axis.xpadding + axis.minor_tick_xmin, yscale(y), axis.xpadding + axis.minor_tick_xmax, yscale(y));
+	}
+	// draw x axis lines (vertical lines)
+	std::vector<double> maj_vec_x;
+
+	for (double x = 0; x <= axis.xmax; x += axis.xtick_maj) {
+		maj_vec_x.push_back(x);
+	}
+	for (double x = 0; x >= axis.xmin; x -= axis.xtick_maj) {
+		maj_vec_x.push_back(x);
+	}
+
+	for (auto x : maj_vec_x) {
+		SDL_SetRenderDrawColor(renderer, axis.color_major_ticks.r, axis.color_major_ticks.g, axis.color_major_ticks.b, SDL_ALPHA_OPAQUE);
+		SDL_RenderDrawLine(renderer, axis.xpadding + axis.major_tick_xmin, yscale(x), axis.xpadding + axis.major_tick_xmax, yscale(x));
+
+		if (axis.draw_major_tick_lines) {
+			if (axis.major_linestyle == linestyle::dotted) {
+				SDL_SetRenderDrawColor(renderer, axis.color.r, axis.color.g, axis.color.b, SDL_ALPHA_OPAQUE);
+				for (int y = yscale(axis.ymin); y < yscale(axis.ymax); y += axis.dotted_line_period) {
+					SDL_RenderDrawLine(renderer, xscale(x), y, xscale(x), y+axis.dotted_line_period/2);
+				}
+			}
+			else {
+				SDL_SetRenderDrawColor(renderer, axis.color.r, axis.color.g, axis.color.b, SDL_ALPHA_OPAQUE);
+				SDL_RenderDrawLine(renderer, xscale(x), yscale(axis.ymin), xscale(x), yscale(axis.ymax));
+			}
+		}
+	}
+
+	std::vector<double> min_vec_x;
+	for (double x = 0; x <= axis.xmax; x += axis.xtick_min) {
+		min_vec_x.push_back(x);
+	}
+	for (double x = 0; x >= axis.xmin; x -= axis.xtick_min) {
+		min_vec_x.push_back(x);
+	}
+
+	for (auto x : min_vec_x) {
+		SDL_SetRenderDrawColor(renderer, axis.color_minor_ticks.r, axis.color_minor_ticks.g, axis.color_minor_ticks.b, SDL_ALPHA_OPAQUE);
+		
+	}
+	cout << "\nxmax: " << xscale(axis.xmax);
     cout << " ymax: " << yscale(axis.ymax);
 }
 

@@ -1,12 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include <vector>
 
 #define USEREVENT_TIMER_TRIGGER 0
 #define XSIZE_DEFAULT 1024
 #define YSIZE_DEFAULT 768
 #define RUN_TIMEOUT_DEFAULT 10
+
+enum class linestyle {
+	solid,
+	dotted
+};
 
 struct axis_params_2d {
     int xpadding = 25;
@@ -20,10 +25,24 @@ struct axis_params_2d {
     double ymax = 1.;
 
     double xtick_maj = 1.;
-    double xtick_min = 0.1;
+    double xtick_min = 0.05;
 
-    double ytick_maj = 1;
+    double ytick_maj = 0.5;
     double ytick_min = 0.1;
+
+	int major_tick_xmin = -2;
+	int major_tick_xmax = 2;
+
+	int minor_tick_xmin = 0;
+	int minor_tick_xmax = 2;
+
+	bool draw_major_tick_lines = true;
+	linestyle major_linestyle = linestyle::solid;
+	int dotted_line_period = 14; // most be even!
+
+	SDL_Color color_major_ticks = { 0, 0, 0 };
+	SDL_Color color_minor_ticks = { 0, 0, 0 };
+	SDL_Color color = { 200,200,255 };
 };
 
 struct datapoint {
@@ -31,13 +50,16 @@ struct datapoint {
     double y;
 };
 
+
 struct line_params_2d {
     std::vector<datapoint> points;
 
     bool connect_to_xmin = false;
     bool connect_the_dots = true;
-};
 
+	SDL_Color color = { 0,0,0 };
+
+};
 
 
 class sdlplot {
